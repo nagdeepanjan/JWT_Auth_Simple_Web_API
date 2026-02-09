@@ -1,0 +1,11 @@
+﻿using JWT_Auth.Entities;
+using JWT_Auth.Models;
+
+namespace JWT_Auth.Services
+{
+    public interface IAuthService
+    {
+        Task<User?> RegisterAsync(UserDto requestUserDto);
+        Task<string?> LoginAsync(UserDto requestUserDto);
+    }
+}
