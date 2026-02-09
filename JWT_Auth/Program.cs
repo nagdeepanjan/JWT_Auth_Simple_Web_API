@@ -1,6 +1,7 @@
 using JWT_Auth.Data;
 using JWT_Auth.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +10,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Servers = new List<OpenApiServer>
+        {
+            new() { Url = "https://jwt-auth-simple-web-api.wittyhill-7ad7b710.eastus.azurecontainerapps.io" }
+        };
+        return Task.CompletedTask;
+    });
+});
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<UserDbContext>(options=>options.UseSqlServer(builder.Configuration.GetConnectionString("UserDatabaseConnectionString")));     //DB
