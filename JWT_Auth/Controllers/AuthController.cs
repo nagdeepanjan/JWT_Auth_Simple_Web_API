@@ -4,6 +4,7 @@ using System.Text;
 using JWT_Auth.Entities;
 using JWT_Auth.Models;
 using JWT_Auth.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +39,14 @@ namespace JWT_Auth.Controllers
                 return BadRequest("Invalid username or password");
             
             return Ok(token);
+        }
+
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult AuthenticatedOnlyEndpoint()
+        {
+            return Ok("You are authenticated!");
         }
     }
 }
