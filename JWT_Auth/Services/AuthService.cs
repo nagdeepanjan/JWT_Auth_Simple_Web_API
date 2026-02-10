@@ -7,13 +7,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace JWT_Auth.Services
 {
     public class AuthService(UserDbContext context, IConfiguration configuration) : IAuthService
     {
-        public async Task<string?> LoginAsync(UserDto requestUserDto)
+        public async Task<TokenResponseDto?> LoginAsync(UserDto requestUserDto)
         {
             var user = await context.Users.FirstOrDefaultAsync(u => u.Username == requestUserDto.Username);
             if (user is null)
@@ -22,11 +23,11 @@ namespace JWT_Auth.Services
             if (new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash, requestUserDto.Password) ==
                 PasswordVerificationResult.Failed) //Hashed password compare
                 return null;
-            
 
-            string token = CreateToken(user);
 
-            return token;
+            var response = new TokenResponseDto { AccessToken = CreateToken(user), RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)};
+
+            return response;
 
         }
 
@@ -47,6 +48,26 @@ namespace JWT_Auth.Services
             return (user);
         }
 
+
+        private string GeneraterefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        private async Task<string> GenerateAndSaveRefreshTokenAsync(User user)
+        {
+            var refreshToken = GeneraterefreshToken();
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await context.SaveChangesAsync();
+            return refreshToken;
+        }
+        
+        
+        
         private string CreateToken(User user)
         {
             var claims = new List<Claim>

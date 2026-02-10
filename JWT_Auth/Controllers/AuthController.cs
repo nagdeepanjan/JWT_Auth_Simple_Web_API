@@ -31,14 +31,14 @@ namespace JWT_Auth.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(UserDto requestUserDto)
+        public async Task<ActionResult<TokenResponseDto>> Login(UserDto requestUserDto)
         {
-            var token = await authService.LoginAsync(requestUserDto);
+            var result = await authService.LoginAsync(requestUserDto);
 
-            if (token is null)
+            if (result is null)
                 return BadRequest("Invalid username or password");
             
-            return Ok(token);
+            return Ok(result);
         }
 
 
