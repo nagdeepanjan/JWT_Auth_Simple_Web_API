@@ -25,10 +25,16 @@ namespace JWT_Auth.Services
                 return null;
 
 
-            var response = new TokenResponseDto { AccessToken = CreateToken(user), RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)};
+            var response = await CreateTokenResponse(user);
 
             return response;
 
+        }
+
+        private async Task<TokenResponseDto> CreateTokenResponse(User? user)
+        {
+            var response = new TokenResponseDto { AccessToken = CreateToken(user), RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)};
+            return response;
         }
 
         public async Task<User?> RegisterAsync(UserDto requestUserDto)
@@ -49,6 +55,17 @@ namespace JWT_Auth.Services
         }
 
 
+        private async Task<User?> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return null;
+            }
+            return user;
+        }
+        
+        
         private string GeneraterefreshToken()
         {
             var randomNumber = new byte[32];
@@ -90,6 +107,15 @@ namespace JWT_Auth.Services
             string jwt = new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
             return jwt;
 
+        }
+
+        public async Task<TokenResponseDto?> RefreshTokensAsync(RefreshTokenRequestDto request)
+        {
+            var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
+
+            if (user is null) return null;
+
+            return await CreateTokenResponse(user);
         }
     }
 }
